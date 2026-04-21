@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CV Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --cream: #ede8d8;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --rust: #b5451b;
+    --sage: #5c7a5c;
+    --text-muted: #6b6252;
+    --border: #d4c9b0;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(181,69,27,0.04) 0%, transparent 50%);
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: grid; grid-template-columns: 420px 1fr; min-height: 100vh; }
+
+  /* ── EDITOR PANEL ── */
+  .editor {
+    background: var(--ink);
+    padding: 2.5rem 2rem;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    color: #e8e0d0;
+  }
+
+  .editor-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    color: var(--gold);
+    margin-bottom: 0.25rem;
+  }
+  .editor-sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #7a7060;
+    margin-bottom: 2.5rem;
+  }
+
+  .section-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .section-card:focus-within { border-color: rgba(201,168,76,0.4); }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .section-toggle {
+    width: 20px; height: 20px;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 4px;
+    color: var(--gold);
+    font-size: 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .section-toggle:hover { background: rgba(201,168,76,0.3); }
+
+  .section-body { padding: 0 1.1rem 1.1rem; }
+
+  .field { margin-bottom: 0.85rem; }
+  .field label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a8070;
+    margin-bottom: 0.35rem;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    color: #e8e0d0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(255,255,255,0.09);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field input::placeholder, .field textarea::placeholder { color: #5a5448; }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+  }
+  .btn-primary:hover { background: #d4b55c; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #9a9080;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #c0b8a8; }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(181,69,27,0.3);
+    color: #c06040;
+    font-size: 0.65rem;
+    padding: 0.35rem 0.6rem;
+  }
+  .btn-danger:hover { border-color: rgba(181,69,27,0.6); color: #d07050; }
+
+  .btn-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+  .entry-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 7px;
+    padding: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .entry-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #c8c0b0;
+    margin-bottom: 0.2rem;
+  }
+  .entry-sub {
+    font-size: 0.7rem;
+    color: #6a6258;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ── PREVIEW PANEL ── */
+  .preview {
+    padding: 4rem 3.5rem;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cv-sheet {
+    width: 100%;
+    max-width: 700px;
+    background: white;
+    box-shadow: 0 4px 60px rgba(0,0,0,0.12), 0 1px 8px rgba(0,0,0,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+  .cv-header {
+    background: var(--ink);
+    padding: 3rem 3.5rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cv-header::before {
+    content: '';
+    position: absolute;
+    bottom: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border: 40px solid rgba(201,168,76,0.08);
+    border-radius: 50%;
+  }
+  .cv-header::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: 80px;
+    width: 100px; height: 100px;
+    border: 20px solid rgba(201,168,76,0.05);
+    border-radius: 50%;
+  }
+
+  .cv-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+    min-height: 1.2em;
+  }
+  .cv-name.placeholder { color: rgba(255,255,255,0.2); font-style: italic; font-weight: 400; }
+
+  .cv-contact {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  .cv-contact-item {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .cv-contact-item span { color: rgba(255,255,255,0.85); }
+  .cv-contact-icon { color: var(--gold); font-size: 0.65rem; }
+
+  .cv-body { padding: 2.5rem 3.5rem; }
+
+  .cv-section { margin-bottom: 2.5rem; }
+  .cv-section:last-child { margin-bottom: 0; }
+
+  .cv-section-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .cv-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold-light), transparent);
+  }
+
+  .cv-entry { margin-bottom: 1.6rem; }
+  .cv-entry:last-child { margin-bottom: 0; }
+
+  .cv-entry-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.2rem; }
+  .cv-entry-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .cv-entry-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-left: 1rem;
+    padding-top: 0.15rem;
+    font-style: italic;
+  }
+  .cv-entry-subtitle {
+    font-size: 0.82rem;
+    color: var(--rust);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  .cv-entry-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  .cv-empty-hint {
+    font-size: 0.8rem;
+    color: #bdb5a5;
+    font-style: italic;
+    text-align: center;
+    padding: 1.5rem;
+    border: 1px dashed #ddd;
+    border-radius: 4px;
+  }
+
+  /* ── SCROLLBAR ── */
+  .editor::-webkit-scrollbar { width: 4px; }
+  .editor::-webkit-scrollbar-track { background: transparent; }
+  .editor::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .editor { position: static; height: auto; }
+    .preview { padding: 2rem 1rem; }
+    .cv-header, .cv-body { padding-left: 2rem; padding-right: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+/* ─── helpers ─── */
+const uid = () => Math.random().toString(36).slice(2, 8);
+
+const emptyEdu = () => ({ id: uid(), school: '', degree: '', dates: '', editing: true });
+const emptyExp = () => ({ id: uid(), company: '', role: '', desc: '', from: '', to: '', editing: true });
+
+/* ─── Field ─── */
+function Field({ label, value, onChange, multiline, placeholder }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      {multiline
+        ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} />
+        : <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} />
+      }
+    </div>
+  );
+}
+
+/* ─── General Info Section ─── */
+function GeneralSection({ data, onChange }) {
+  const [open, setOpen] = useState(true);
+  const [editing, setEditing] = useState(true);
+  const [draft, setDraft] = useState({ ...data });
+
+  const set = key => val => setDraft(d => ({ ...d, [key]: val }));
+
+  const submit = () => { onChange(draft); setEditing(false); };
+  const edit = () => { setDraft({ ...data }); setEditing(true); };
+
+  return (
+    <div className="section-card">
+      <div className="section-header" onClick={() => setOpen(o => !o)}>
+        <span className="section-title">General Info</span>
+        <div className="section-toggle">{open ? '−' : '+'}</div>
+      </div>
+      {open && (
+        <div className="section-body">
+          {editing ? (
+            <>
+              <Field label="Full Name" value={draft.name} onChange={set('name')} placeholder="Jane Doe" />
+              <Field label="Email" value={draft.email} onChange={set('email')} placeholder="jane@email.com" />
+              <Field label="Phone" value={draft.phone} onChange={set('phone')} placeholder="+1 555 000 0000" />
+              <div className="btn-row">
+                <button className="btn btn-primary" onClick={submit}>Save</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="entry-card">
+                <div className="entry-label">{data.name || <em style={{color:'#555'}}>No name</em>}</div>
+                <div className="entry-sub">{data.email} {data.phone && `· ${data.phone}`}</div>
+              </div>
+              <div className="btn-row">
+                <button className="btn btn-ghost" onClick={edit}>Edit</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Education Entry ─── */
+function EduEntry({ entry, onChange, onRemove }) {
+  const [draft, setDraft] = useState({ ...entry });
+  const set = key => val => setDraft(d => ({ ...d, [key]: val }));
+
+  const submit = () => { onChange({ ...draft, editing: false }); };
+  const edit = () => { setDraft({ ...entry }); onChange({ ...entry, editing: true }); };
+
+  if (entry.editing) return (
+    <div className="entry-card">
+      <Field label="School / University" value={draft.school} onChange={set('school')} placeholder="MIT" />
+      <Field label="Degree / Title of Study" value={draft.degree} onChange={set('degree')} placeholder="B.Sc. Computer Science" />
+      <Field label="Dates" value={draft.dates} onChange={set('dates')} placeholder="Sep 2019 – Jun 2023" />
+      <div className="btn-row">
+        <button className="btn btn-primary" onClick={submit}>Save</button>
+        <button className="btn btn-danger" onClick={onRemove}>Remove</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="entry-card">
+      <div className="entry-label">{entry.school || 'Unnamed school'}</div>
+      <div className="entry-sub">{entry.degree}{entry.dates && ` · ${entry.dates}`}</div>
+      <div className="btn-row">
+        <button className="btn btn-ghost" style={{fontSize:'0.65rem', padding:'0.3rem 0.65rem'}} onClick={edit}>Edit</button>
+        <button className="btn btn-danger" onClick={onRemove}>Remove</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Education Section ─── */
+function EducationSection({ entries, onChange }) {
+  const [open, setOpen] = useState(true);
+
+  const add = () => onChange([...entries, emptyEdu()]);
+  const update = (id, updated) => onChange(entries.map(e => e.id === id ? updated : e));
+  const remove = id => onChange(entries.filter(e => e.id !== id));
+
+  return (
+    <div className="section-card">
+      <div className="section-header" onClick={() => setOpen(o => !o)}>
+        <span className="section-title">Education</span>
+        <div className="section-toggle">{open ? '−' : '+'}</div>
+      </div>
+      {open && (
+        <div className="section-body">
+          {entries.map(e => (
+            <EduEntry key={e.id} entry={e}
+              onChange={updated => update(e.id, updated)}
+              onRemove={() => remove(e.id)} />
+          ))}
+          <button className="btn btn-ghost" style={{width:'100%', marginTop:'0.25rem'}} onClick={add}>+ Add Education</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Experience Entry ─── */
+function ExpEntry({ entry, onChange, onRemove }) {
+  const [draft, setDraft] = useState({ ...entry });
+  const set = key => val => setDraft(d => ({ ...d, [key]: val }));
+
+  const submit = () => onChange({ ...draft, editing: false });
+  const edit = () => { setDraft({ ...entry }); onChange({ ...entry, editing: true }); };
+
+  if (entry.editing) return (
+    <div className="entry-card">
+      <Field label="Company" value={draft.company} onChange={set('company')} placeholder="Acme Corp" />
+      <Field label="Position / Title" value={draft.role} onChange={set('role')} placeholder="Senior Developer" />
+      <Field label="Responsibilities" value={draft.desc} onChange={set('desc')} placeholder="Led a team of 5 engineers…" multiline />
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem'}}>
+        <Field label="From" value={draft.from} onChange={set('from')} placeholder="Jan 2022" />
+        <Field label="To" value={draft.to} onChange={set('to')} placeholder="Present" />
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-primary" onClick={submit}>Save</button>
+        <button className="btn btn-danger" onClick={onRemove}>Remove</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="entry-card">
+      <div className="entry-label">{entry.company || 'Unnamed company'}</div>
+      <div className="entry-sub">{entry.role}{(entry.from || entry.to) && ` · ${entry.from}${entry.to ? ` – ${entry.to}` : ''}`}</div>
+      {entry.desc && <div style={{fontSize:'0.72rem', color:'#8a8070', marginTop:'0.25rem', whiteSpace:'pre-wrap'}}>{entry.desc.slice(0,80)}{entry.desc.length > 80 ? '…' : ''}</div>}
+      <div className="btn-row">
+        <button className="btn btn-ghost" style={{fontSize:'0.65rem', padding:'0.3rem 0.65rem'}} onClick={edit}>Edit</button>
+        <button className="btn btn-danger" onClick={onRemove}>Remove</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Experience Section ─── */
+function ExperienceSection({ entries, onChange }) {
+  const [open, setOpen] = useState(true);
+
+  const add = () => onChange([...entries, emptyExp()]);
+  const update = (id, updated) => onChange(entries.map(e => e.id === id ? updated : e));
+  const remove = id => onChange(entries.filter(e => e.id !== id));
+
+  return (
+    <div className="section-card">
+      <div className="section-header" onClick={() => setOpen(o => !o)}>
+        <span className="section-title">Experience</span>
+        <div className="section-toggle">{open ? '−' : '+'}</div>
+      </div>
+      {open && (
+        <div className="section-body">
+          {entries.map(e => (
+            <ExpEntry key={e.id} entry={e}
+              onChange={updated => update(e.id, updated)}
+              onRemove={() => remove(e.id)} />
+          ))}
+          <button className="btn btn-ghost" style={{width:'100%', marginTop:'0.25rem'}} onClick={add}>+ Add Experience</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── CV Preview ─── */
+function CVPreview({ general, education, experience }) {
+  const saved = {
+    edu: education.filter(e => !e.editing),
+    exp: experience.filter(e => !e.editing),
+  };
+
+  return (
+    <div className="cv-sheet">
+      <div className="cv-header">
+        <div className={`cv-name ${!general.name ? 'placeholder' : ''}`}>
+          {general.name || 'Your Name'}
+        </div>
+        <div className="cv-contact">
+          {general.email && (
+            <div className="cv-contact-item">
+              <span className="cv-contact-icon">✉</span>
+              <span>{general.email}</span>
+            </div>
+          )}
+          {general.phone && (
+            <div className="cv-contact-item">
+              <span className="cv-contact-icon">✆</span>
+              <span>{general.phone}</span>
+            </div>
+          )}
+          {!general.email && !general.phone && (
+            <div className="cv-contact-item" style={{color:'rgba(255,255,255,0.2)', fontStyle:'italic'}}>
+              Fill in your details →
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="cv-body">
+        {/* Education */}
+        <div className="cv-section">
+          <div className="cv-section-title">Education</div>
+          {saved.edu.length === 0 ? (
+            <div className="cv-empty-hint">Add your education in the editor</div>
+          ) : saved.edu.map(e => (
+            <div key={e.id} className="cv-entry">
+              <div className="cv-entry-head">
+                <div className="cv-entry-name">{e.school}</div>
+                {e.dates && <div className="cv-entry-date">{e.dates}</div>}
+              </div>
+              {e.degree && <div className="cv-entry-subtitle">{e.degree}</div>}
+            </div>
+          ))}
+        </div>
+
+        {/* Experience */}
+        <div className="cv-section">
+          <div className="cv-section-title">Experience</div>
+          {saved.exp.length === 0 ? (
+            <div className="cv-empty-hint">Add your work experience in the editor</div>
+          ) : saved.exp.map(e => (
+            <div key={e.id} className="cv-entry">
+              <div className="cv-entry-head">
+                <div className="cv-entry-name">{e.company}</div>
+                {(e.from || e.to) && (
+                  <div className="cv-entry-date">{e.from}{e.to ? ` – ${e.to}` : ''}</div>
+                )}
+              </div>
+              {e.role && <div className="cv-entry-subtitle">{e.role}</div>}
+              {e.desc && <div className="cv-entry-desc">{e.desc}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── App ─── */
+function App() {
+  const [general, setGeneral] = useState({ name: '', email: '', phone: '' });
+  const [education, setEducation] = useState([]);
+  const [experience, setExperience] = useState([]);
+
+  return (
+    <div className="app">
+      <aside className="editor">
+        <div className="editor-brand">CV Builder</div>
+        <div className="editor-sub">Craft your story</div>
+        <GeneralSection data={general} onChange={setGeneral} />
+        <EducationSection entries={education} onChange={setEducation} />
+        <ExperienceSection entries={experience} onChange={setExperience} />
+      </aside>
+      <main className="preview">
+        <CVPreview general={general} education={education} experience={experience} />
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
